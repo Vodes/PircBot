@@ -132,19 +132,26 @@ public class DccFileTransfer {
                     // Following line fixed for jdk 1.1 compatibility.
                     foutput = new BufferedOutputStream(new FileOutputStream(file.getCanonicalPath(), resume));
 
-                    byte[] inBuffer = new byte[BUFFER_SIZE];
-                    byte[] outBuffer = new byte[4];
-                    int bytesRead = 0;
-                    while ((bytesRead = input.read(inBuffer, 0, inBuffer.length)) != -1) {
-                        foutput.write(inBuffer, 0, bytesRead);
-                        _progress += bytesRead;
-                        // Send back an acknowledgement of how many bytes we have got so far.
-                        outBuffer[0] = (byte) ((_progress >> 24) & 0xff);
-                        outBuffer[1] = (byte) ((_progress >> 16) & 0xff);
-                        outBuffer[2] = (byte) ((_progress >> 8) & 0xff);
-                        outBuffer[3] = (byte) ((_progress >> 0) & 0xff);
-                        output.write(outBuffer);
-                        output.flush();
+                    /**
+                     * @author Vodes
+                     * Optimize buffering and fix Linux compatibility
+                     */
+                    byte[] buffer = new byte[4096];
+                    //byte[] outBuffer = new byte[4];
+                    int count;
+                    while((count = input.read(buffer)) > 0){
+                        foutput.write(buffer, 0, count);
+                        _progress += count;
+                        /**
+                         * TL;DR
+                         * I have no idea why this does not work on linux
+                            outBuffer[0] = (byte) ((_progress >> 24) & 0xff);
+                            outBuffer[1] = (byte) ((_progress >> 16) & 0xff);
+                            outBuffer[2] = (byte) ((_progress >> 8) & 0xff);
+                            outBuffer[3] = (byte) ((_progress >> 0) & 0xff);
+                            output.write(outBuffer);
+                            output.flush();
+                        */
                         delay();
                     }
                     foutput.flush();
@@ -161,7 +168,6 @@ public class DccFileTransfer {
                         // Do nothing.
                     }
                 }
-
                 _bot.onFileTransferFinished(DccFileTransfer.this, exception);
             }
         }.start();
