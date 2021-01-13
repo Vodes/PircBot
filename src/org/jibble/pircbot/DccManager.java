@@ -15,6 +15,8 @@ found at http://www.jibble.org/licenses/
 package org.jibble.pircbot;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class is used to process DCC events from the server.
@@ -43,7 +45,13 @@ public class DccManager {
      * @return True if the type of request was handled successfully.
      */
     boolean processRequest(String nick, String login, String hostname, String request) {
-        StringTokenizer tokenizer = new StringTokenizer(request);
+        /**
+         * @author Vodes
+         * Made a custom tokenizer to fix the false parsing of Filenames with Spaces.
+         * This Request: DCC SEND "Test Movie 123.mkv" 2421906457 51681 69809564
+         * Wouldn't work. Which is why i implemented this.
+         */
+        CustomTokenizer tokenizer = new CustomTokenizer(request);
         tokenizer.nextToken();
         String type = tokenizer.nextToken();
         String filename = tokenizer.nextToken();
@@ -56,12 +64,11 @@ public class DccManager {
                 size = Long.parseLong(tokenizer.nextToken());
             }
             catch (Exception e) {
-                // Stick with the old value.
+                e.printStackTrace();
             }
 
             DccFileTransfer transfer = new DccFileTransfer(_bot, this, nick, login, hostname, type, filename, address, port, size);
             _bot.onIncomingFileTransfer(transfer);
-
         }
         else if (type.equals("RESUME")) {
             int port = Integer.parseInt(tokenizer.nextToken());
@@ -148,4 +155,25 @@ public class DccManager {
     private PircBot _bot;
     private Vector _awaitingResume = new Vector();
 
+    /**
+     * @author Vodes
+     * Splits a request by spaces and keeps quoted parts intact.
+     */
+    private class CustomTokenizer {
+
+        private int current = 0;
+        private List<String> tokens = new ArrayList<String>();
+
+        public CustomTokenizer(String input){
+            Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(input);
+            while (m.find()){
+                tokens.add(m.group(1).replace("\"", ""));
+            }
+        }
+
+        public String nextToken(){
+            current++;
+            return tokens.get(current - 1);
+        }
+    }
 }
