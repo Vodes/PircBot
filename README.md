@@ -1,3 +1,5 @@
+This fork is made by Vodes to fix DCC Problems.
+
 # PircBot'
 
 PircBot' (pronounced "PircBot prime") is a framework for writing IRC bots in
