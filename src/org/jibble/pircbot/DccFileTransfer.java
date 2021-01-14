@@ -137,21 +137,14 @@ public class DccFileTransfer {
                      * Optimize buffering and fix Linux compatibility
                      */
                     byte[] buffer = new byte[4096];
-                    //byte[] outBuffer = new byte[4];
                     int count;
                     while((count = input.read(buffer)) > 0){
                         foutput.write(buffer, 0, count);
                         _progress += count;
-                        /**
-                         * TL;DR
-                         * I have no idea why this does not work on linux
-                            outBuffer[0] = (byte) ((_progress >> 24) & 0xff);
-                            outBuffer[1] = (byte) ((_progress >> 16) & 0xff);
-                            outBuffer[2] = (byte) ((_progress >> 8) & 0xff);
-                            outBuffer[3] = (byte) ((_progress >> 0) & 0xff);
-                            output.write(outBuffer);
-                            output.flush();
-                        */
+                        // Needed for Linux
+                        if(_progress >= _size){
+                            break;
+                        }
                         delay();
                     }
                     foutput.flush();
@@ -168,6 +161,7 @@ public class DccFileTransfer {
                         // Do nothing.
                     }
                 }
+                isDone = true;
                 _bot.onFileTransferFinished(DccFileTransfer.this, exception);
             }
         }.start();
@@ -507,5 +501,6 @@ public class DccFileTransfer {
     private long _packetDelay = 0;
 
     private long _startTime = 0;
+    public boolean isDone = false;
 
 }
