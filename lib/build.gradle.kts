@@ -10,11 +10,6 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    // https://mvnrepository.com/artifact/commons-configuration/commons-configuration
-    implementation("commons-configuration:commons-configuration:1.10")
-}
-
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(8))
